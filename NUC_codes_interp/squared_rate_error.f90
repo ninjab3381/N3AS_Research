@@ -14,30 +14,31 @@ program sigma_v_calculation
     
           !  double precision :: PI
     
-          real :: E_G, A_1, A_0, A, sigma_v_int_constant, sigma_v_int, & 
-          sigma_v, new_sigma_v, E_root, E_root_keV, S_root, f, dS_dE_2k, S_root_2k
+          real*8 :: E_G, A_1, A_0, A, sigma_v_int_constant, sigma_v_int, & 
+          sigma_v, new_sigma_v, E_root, E_root_keV, S_root, f, dS_dE_2k, S_root_2k, &
+          S_theory_coeff_E_p, S_theory_coeff_E, first_integral, second_integral, f2
     
-           real, dimension(13):: S, E
+           real*8, dimension(13):: S, E
            
-           real, dimension(60) :: T9
+           real*8, dimension(60) :: T9, squared_err_arr
            
-           real, dimension(6) :: GL_x_root, GL_w_root
+           real*8, dimension(6) :: GL_x_root, GL_w_root
 
-           real, dimension(:), allocatable :: S_theory
+           real*8, dimension(:), allocatable :: S_theory
 
            !double precision, dimension(:, :), allocatable :: cov_matrix
-           real, dimension(:, :), allocatable :: cov_matrix
+           real*8, dimension(:, :), allocatable :: cov_matrix
 
            integer :: nsize
     
-           real :: PI
+           real*8 :: PI
 
-           real :: place_holder
+           real*8 :: place_holder
     
     
     
            INTEGER :: Z_0,Z_1
-           integer :: i, j, reason
+           integer :: i, j, k, reason, E_p_exp, E_exp, m, n
            
         ! Executable statements 
            !Get variables for deuterium burning reaction d(p, g)3He
@@ -89,25 +90,26 @@ program sigma_v_calculation
             rewind(15)
 
            do i=1, nsize
-             read(15, *) S_theory(i)
+            read(15, *) S_theory(i)
            end do
-
 
            close(15)
+
+           read(*,*)
             
-           open(16, file = 'cov_matrix_values.dat', status = 'unknown')
+           open(16, file = 'cov_matrix_values_copy.dat', status = 'unknown')
 
             do i = 1, nsize
-               read(16,*) cov_matrix(i, :)
+                read(16,*) cov_matrix(i, :)
             end do
 
-            do i = 1, nsize
-               write(*, *) S_theory(i)
-           end do
+        !     do i = 1, nsize
+        !        write(*, *) S_theory(i)
+        !    end do
                 
-            do i = 1, nsize
-                write(*, *) cov_matrix(i, :)
-            end do
+        !     do i = 1, nsize
+        !         write(*, *) cov_matrix(i, :)
+        !     end do
     
            dS_dE_2k = ((S_theory(2)) + (S_theory(3)*2.0*2000.0) -  & 
            (S_theory(4)*3.0*2000.0**(2.0))) * 10.0**(-6.0)
@@ -118,47 +120,68 @@ program sigma_v_calculation
            do i= 1, size(T9)
           
              sigma_v_int_constant = (6.1968*(10**(-14.0))*(A**(-1.0/2))*(T9(i)**(-3.0/2))) * T9(i)/11.605 
-             sigma_v_int = 0
-    
-             do j = 1, (size(GL_x_root))
-    
-                E_root = GL_x_root(j) * T9(i)/11.605
-                E_root_keV = E_root*10**(3.0)
-    
-                IF(E_root_keV <2.0) THEN
-                   S_root = 0.0
-                ELSE IF(E_root_keV>2000) THEN
-    
-                   S_root = S_root_2k + dS_dE_2k*(E_root_keV-2000.0)
-    
-                ELSE
-                   S_root = (S_theory(1) + (S_theory(2)*E_root_keV) + (S_theory(3)*E_root_keV**(2.0)) -  & 
-                   (S_theory(4)*E_root_keV**(3.0))) * 10.0**(-6.0)
-    
-                   !write(3, *) "calc", T9(i), E_root_keV, S_root
-                END IF
-    
-     
-                f = S_root*EXP(-(((E_G*11.605)/(T9(i)*GL_x_root(j)))**(0.5)))
-                sigma_v_int = sigma_v_int + GL_w_root(j)*f
+             second_integral = 0
+
+                do j = 1, size(GL_x_root)
+                    first_integral = 0
+                    do k = 1, (size(GL_x_root))
                 
-             end do
+
+                        E_root = GL_x_root(k) * T9(i)/11.605
+                        E_root_keV = E_root*10**(3.0)
+
+                        ! IF(E_root_keV <2.0) THEN
+                        !     S_root = 0.0
+                        ! ELSE IF(E_root_keV>2000) THEN
+
+                        !     S_root = S_root_2k + dS_dE_2k*(E_root_keV-2000.0)
+
+                        ! ELSE
+                        !     S_root = (S_theory(1) + (S_theory(2)*E_root_keV) + (S_theory(3)*E_root_keV**(2.0)) -  & 
+                        !     (S_theory(4)*E_root_keV**(3.0))) * 10.0**(-6.0)
+
+                        !     write(3, *) "calc", T9(i), E_root_keV, S_root
+                        ! END IF
+                        f = 0
+                        do m = 1, nsize
+                            E_p_exp = m - 1
+                            do n = 1, nsize
+                                E_exp = n - 1
+                                f = f + ((T9(i)*10**(3)*GL_x_root(j)/11.605)**E_p_exp)* & 
+                                ((T9(i)*10**(3)*GL_x_root(k)/11.605)**E_exp)* cov_matrix(m, n)
+
+                                !if(i == 1) write(*, *) j, k, m, n, f
+                            end do
+                        end do
+
+                        
+
+                        f = f*10**(-12.0)
+
+                        f = f*EXP(-(((E_G*11.605)/(T9(i)*GL_x_root(k)))**(0.5)))
+                        first_integral = first_integral + GL_w_root(k)*f
+
+                        if(i == size(T9)) write(*, *) j, k, f, GL_w_root(k),first_integral
+
+                    
+                    end do
+
+                    second_integral = second_integral + GL_w_root(j)*EXP(-(((E_G*11.605)/(T9(i)*GL_x_root(j)))**(0.5)))* & 
+                    first_integral
+
+                end do
+            
+                squared_err_arr(i) = second_integral*(sigma_v_int_constant**2)        
         
-             sigma_v = sigma_v_int_constant*sigma_v_int
-        
-             open(1, file = 'sigma_v_d(p,g)3He_gauss_2.dat', status = 'unknown')  
-             write(1,*) T9(i), sigma_v
+
+             open(7, file = 'squared_err_arr_values_Nature.dat')
+             write(7,*) T9(i), squared_err_arr(i),  squared_err_arr(i)**(0.5)
+
     
-             new_sigma_v = (2.65e+3*(T9(i))**(-(2.0/3.0))*EXP(-3.720/((T9(i))**(1.0/3.0))) &
-             *(1.+.112*((T9(i))**(1.0/3.0))+1.99*(T9(i))**(2.0/3.0)+1.56*(T9(i))+.162*((T9(i))**(4.0/3.0))+ &
-             .324*((T9(i))**(5.0/3.0))))&
-             /(6.022*10**(23.0))
-    
-             open(2, file = 'new_sigma_v_d(p,g)3He_2.dat', status = 'unknown')  
-             write(2,*) T9(i), new_sigma_v
-    
-          end do
+            end do
     
      
         
     end program sigma_v_calculation
+
+    !write sigma_v_int_constant

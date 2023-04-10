@@ -186,11 +186,19 @@ C      read from/written to the a.out file.
        
        OPEN (unit=2, file='nuc123.dat', status='new')  !Output file.
 
-       OPEN(unit = 87, FILE="sigma_v_d(p,g)3He.dat", status = 'old')
+       OPEN(unit = 87, FILE="rxn_rate_err_1", status = 'old')
 
        DO i = 1, 60
               read(87, *) T9_arr(i),  sigma_v_d_p_g_3He_arr(i)
+
        END DO
+
+       DO i = 1, 60
+              sigma_v_d_p_g_3He_arr(i) = sigma_v_d_p_g_3He_arr(i)* 
+     a        6.022e23
+       END DO
+
+
 
        CLOSE(87)
 

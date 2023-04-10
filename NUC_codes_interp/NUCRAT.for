@@ -339,11 +339,14 @@ C.......H2(p,g)He3.................(Smith-Kawano-Malaney 1992)
        f(20)  = 2.65e+3*t9m23*ex(-3.720/t913)
      a         *(1.+.112*t913+1.99*t923+1.56*t9+.162*t943+.324*t953)
 
-
+* have to call interp on the three. normal and error
 
        call interp(60, T9_arr, sigma_v_d_p_g_3He_arr, t9, 
      a sigma_v_val_d_p_g_3He)
+
        write(86, *) t9, f(20), sigma_v_val_d_p_g_3He
+
+       f(20) = sigma_v_val_d_p_g_3He
 
 C.......H3(p,g)He4.................(Caughlan-Fowler 1988)
        f(21)  = 2.20e+4*t9m23*ex(-3.869/t913)

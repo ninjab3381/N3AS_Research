@@ -96,7 +96,7 @@ program sigma_v_calculation
             END IF
 
  
-            f = S_root*EXP(-(((E_G*11.605)/(T9(i)*GL_x_root(j)))**(0.5)))
+            f = S_root*EXP(-(((E_G*11.605)/(T9(i)*GL_x_root(j)))**(0.5))) 
             sigma_v_int = sigma_v_int + GL_w_root(j)*f
             
          end do

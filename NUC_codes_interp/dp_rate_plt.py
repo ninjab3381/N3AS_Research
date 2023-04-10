@@ -1,6 +1,6 @@
 import math
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+import matlib.py as plt
+import matlib as mpl
 
 mpl.rcParams['text.usetex'] = True
 
@@ -35,7 +35,7 @@ with open(filename2, 'r') as f:
 
 
 
-fig, ax = plt.subplots()
+fig, ax = plt.subs()
 fig.set_figheight(12)
 fig.set_figwidth(10)
 
@@ -53,7 +53,7 @@ ax.set_title('dp rate vs temp')
 ax.set_xlabel('temp')
 ax.set_ylabel('dp rate')
 
-#fig.subplots_adjust(hspace=.5)
+#fig.subs_adjust(hspace=.5)
 
 plt.savefig('plt_gauss.pdf')
 
